@@ -32,19 +32,19 @@ I want to get started on {{title}}. Can you:
 - {{context}} is replaced with what you currently have written in your notes (up to 5000 chars), this is optional
 
 
-![TemplateExample] (TemplateExample.png)
+![TemplateExample](TemplateExample.png)
 
 
 Then assign a tag and a template in the settings:
 
-![SettingsExample] (SettingsExample.png)
+![SettingsExample](SettingsExample.png)
 
 You can assign multiple by seperating each with commas, just make sure the tag and template you want are in the same order (No spaces between the commas!):
 
-![MultipleTags] (MultipleTags.png)
+![MultipleTags](MultipleTags.png)
 
 Then when you open a file with that tag, you'll get a response from ChatGPT with your prompt:
-![ResponseExample] (ResponseExample.png)
+![ResponseExample](ResponseExample.png)
 
 
 ## How To Use
@@ -69,11 +69,11 @@ It's also cleaner this way
 
 Cursor is on the left note:
 
-![CursorLeft] (CursorLeft.png)
+![CursorLeft](CursorLeft.png)
 
 Cursor is on the right note:
 
-![CursorRight] (CursorRight.png)
+![CursorRight](CursorRight.png)
 
 ### Conversation Retention
 
