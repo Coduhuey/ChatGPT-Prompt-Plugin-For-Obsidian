@@ -5,7 +5,7 @@ In order to maximize the efficiency of ChatGPT, you need a good prompt.
 It's so important that there are guides on how to write good ChatGPT prompts: https://www.coursera.org/articles/how-to-write-chatgpt-prompts
 
 What this plugin does: 
-- Removes workflow friction from your workflow by getting quickly creating ChatGPT prompts when you create/open a note
+- Removes workflow friction by creating and sending prompts to ChatGPT when you create/open a note
 
 All you have to do is create a template (create a new note in your vault), assign a tag, and this plugin will send a prompt to ChatGPT using your template.
 
