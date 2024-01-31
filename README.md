@@ -95,4 +95,4 @@ So this plugin stores your latest conversation from ChatGPT up to the amount of 
 
 In the settings you can change ChatGPT's behavior. The default is "You are a helpful assistant." But you can make it quirky if you want. 
 
-Kind of just a fun feature, but I figured it might be helpful for people who want to add some personality/creativity to their suggestions.
+Kind of just a fun feature, but it's in ChatGPT's api so I figured I'd make it customizable for users too.
