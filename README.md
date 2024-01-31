@@ -63,7 +63,9 @@ Then when you open a file with that tag, you'll get a response from ChatGPT with
 
 ### Chatbox To Ask ChatGPT Further Questions
 
-It'd be a bad ChatGPT plugin if you couldn't communicate directly with it. It's the best feature of ChatGPT after all.
+It'd be a bad ChatGPT plugin if you couldn't communicate directly with it. 
+
+Useful feature so users can ask further questions after the prompt.
 
 
 ### One Conversation Per Note
