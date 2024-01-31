@@ -1,0 +1,11 @@
+{
+	"id": "chatgpt-prompt-plugin",
+	"name": "Prompt ChatGPT",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Send templates to chatgpt when you open a file",
+	"author": "Coduhuey",
+	"authorUrl": "",
+	"fundingUrl": "",
+	"isDesktopOnly": false
+}
