@@ -2,9 +2,9 @@
 
 In order to maximize the efficiency of ChatGPT, you need a good prompt.
 
-It's so important that there are guide on how to write good ChatGPT prompts: https://www.coursera.org/articles/how-to-write-chatgpt-prompts
+It's so important that there are guides on how to write good ChatGPT prompts: https://www.coursera.org/articles/how-to-write-chatgpt-prompts
 
-Remove friction from your workflow by getting quickly creating ChatGPT prompts when you create/open a note.
+What this plugin does: Remove friction from your workflow by getting quickly creating ChatGPT prompts when you create/open a note
 
 All you have to do is create a template (create a new note in your vault), assign a tag, and this plugin will send a prompt to ChatGPT using your template.
 
@@ -39,7 +39,7 @@ Then assign a tag and a template in the settings:
 
 ![SettingsExample](SettingsExample.png)
 
-You can assign multiple by seperating each with commas, just make sure the tag and template you want are in the same order (No spaces between the commas!):
+You can assign multiple (tag + template pairs) by seperating each with commas. Just make sure the tag and template you want associated with each other are in the same order (And no spaces between the commas!):
 
 ![MultipleTags](MultipleTags.png)
 
@@ -61,11 +61,14 @@ Then when you open a file with that tag, you'll get a response from ChatGPT with
 
 ## Additional Features
 
+### Chatbox To Ask ChatGPT Further Questions
+
+It'd be a bad ChatGPT plugin if you couldn't communicate directly with it. It's the best feature of ChatGPT after all.
+
+
 ### One Conversation Per Note
 
 The view on the side updates for whatever note your cursor is on. So ChatGPT will not have overlapping context if you're switching between notes.
-
-It's also cleaner this way
 
 Cursor is on the left note:
 
@@ -87,6 +90,6 @@ So this plugin stores your latest conversation from ChatGPT up to the amount of 
 
 ### Custom ChatGPT Behavior
 
-In the settings you can change ChatGPT's behavior. The default is "You are a helpful assistant." But you can make it quirky if you want. Kind of just a fun feature.
+In the settings you can change ChatGPT's behavior. The default is "You are a helpful assistant." But you can make it quirky if you want. 
 
-Although it might help for people that want creativity help.
+Kind of just a fun feature, but I figured it might be helpful for people who want to add some personality/creativity to their suggestions.
