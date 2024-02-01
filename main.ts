@@ -1,6 +1,6 @@
 import { workerData } from 'worker_threads';
 import { ExampleView } from './main';
-import { TFile, ViewState, Workspace, ItemView, addIcon, Menu, App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, Vault, getAllTags } from 'obsidian';
+import { TFile, ViewState, Workspace, ItemView, addIcon, Menu, App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, Vault, getAllTags, normalizePath } from 'obsidian';
 
 // Remember to rename these classes and interfaces!
 
@@ -88,8 +88,6 @@ export class ExampleView extends ItemView {
 
 	const linebreak = container.createEl('div');
 	linebreak.style.padding = '5px';
-	//linebreak.style.borderTop = '1px solid #ccc';
-	//linebreak.style.borderBottom = '1px solid #ccc';
 	container.appendChild(linebreak);
 
 	const chatDiv = container.createEl('div');
@@ -97,14 +95,11 @@ export class ExampleView extends ItemView {
 	chatDiv.style.height = '92%';
 	chatDiv.style.overflow = 'auto';
 	chatDiv.style.userSelect = "text";
-	//chatDiv.style.display = 'flex';
-	//chatDiv.style.flexDirection = 'column-reverse';
-	//chatDiv.style.border = '1px solid #ccc';
 	chatDiv.style.padding = '10px';
   
 	container.appendChild(chatDiv);
   
-	const inputBox = document.createElement('input');
+	const inputBox = container.createEl('input');
 	inputBox.type = 'text';
 	inputBox.placeholder = 'Type your message...';
 	inputBox.style.width = '100%';
@@ -140,28 +135,36 @@ export class ExampleView extends ItemView {
   }
 
   displayConversation(chatDiv: HTMLElement) {
-
-	//should make this a nice border, a block for each text between user and assistant
-	chatDiv.innerHTML = this.conversation.conversations
-	.map((msg) => `<div><strong>${this.capitalizeFirstLetter(msg.role)}:\n\n</strong> ${this.formatContent(msg.content)}</div>`)
-	  .join('');
-
-	  chatDiv.scrollTop = chatDiv.scrollHeight;
+	
+	this.conversation.conversations.map((msg) => {
+		let div = chatDiv.createEl('div');
+		let strong = div.createEl('strong', {text: this.capitalizeFirstLetter(msg.role)+"\n\n"});
+		//let formattedEl = div.createEl('div', {text: msg.content.replace("\n", "\n\n")});
+		let formattedEl = this.formatContent(chatDiv, msg.content)
+		div.appendChild(strong);
+		div.appendChild(formattedEl);
+		chatDiv.appendChild(div);
+	});
+	chatDiv.scrollTop = chatDiv.scrollHeight;
   }
 
   capitalizeFirstLetter(s : string) {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-formatContent(content: string) {
+formatContent(chatDiv: HTMLElement, content: string) {
     // Split content into lines
+	let innerDiv = chatDiv.createEl('ul');
     const lines = content.split('\n');
 
     // Convert lines into a structured list
-    const listItems = lines.map((line) => `${line}<br>`).join('');
+    const listItems = lines.map((line) => {
+		innerDiv.appendChild(innerDiv.createEl('span', {text: line}));
+		innerDiv.appendChild(innerDiv.createEl('br'));
+	});
 
     // Wrap the list items in an unordered list
-    return `<ul>${listItems}</ul>`;
+    return innerDiv;
 }
 } 
 
@@ -182,13 +185,6 @@ export default class HelloWorldPlugin extends Plugin {
 	async onload() {
 
 		await this.loadSettings();
-
-
-		//this.settings.conversations = new Map<string, Conversation[]>();
-
-		//this.conversations = this.settings.conversations;
-		//console.log(typeof this.conversations);
-		//this.conversations = new Map<string, DatedConversation>();
 
 		this.conversations = new Map(Object.entries(this.settings.conversations));
 
@@ -215,10 +211,6 @@ export default class HelloWorldPlugin extends Plugin {
 			VIEW_TYPE_EXAMPLE,
 			(leaf) => new ExampleView(leaf, this)
 		  );
-
-		//stops a console log error message, probably due to a race condition
-		//this.activateView();
-
 
 		this.app.workspace.on('file-open', (file) => {
 			if(!this.loaded){
@@ -363,9 +355,6 @@ export default class HelloWorldPlugin extends Plugin {
 			// A leaf with our view already exists, use that
 			var leaf = leaves[0];
 			leaf.detach();
-			//var rightLeaf = this.app.workspace.getRightLeaf(false);
-			//this.app.workspace.changeLayout(this.oldWorkspace);
-			//await leaf.setViewState({ type: VIEW_TYPE_EXAMPLE, active: false });
 		}
 	}
 
@@ -395,8 +384,6 @@ async addPlaceholdersToPrompt(prompt: string, filename: string, currentFile: TFi
 }
 
 	async onunload() {
-		//this.window.detach();
-
 		this.settings.conversations = Object.fromEntries(this.conversations);
 		await this.saveSettings();
 	}
@@ -425,7 +412,7 @@ class SampleSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("API key")
-			.setDesc('Get your api key from: https://platform.openai.com/api-keys')
+			.setDesc('Get your api key from: https://platform.openai.com/api-keys.')
 			.addText(text => text
 				.setPlaceholder('Enter api key')
 				.setValue(this.plugin.settings.api_key)
@@ -436,7 +423,7 @@ class SampleSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Tags to research")
-			.setDesc('The tags you want chatgpt to run on when note is opened')
+			.setDesc('The tags you want ChatGPT to run on when note is opened.')
 			.addText(text => text
 				.setPlaceholder('tag1,tag2,tag3')
 				.setValue(this.plugin.settings.tags.join(','))
@@ -447,17 +434,17 @@ class SampleSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Prompt templates for each tag")
-			.setDesc('The templates to use corresponding to the order of the tags above')
+			.setDesc('The templates to use corresponding to the order of the tags above.')
 			.addText(text => text
 				.setPlaceholder('path1,path2,path3')
 				.setValue(this.plugin.settings.path_to_prompt_template.join(','))
 				.onChange(async (value) => {
-					this.plugin.settings.path_to_prompt_template = value.split(',');
+					this.plugin.settings.path_to_prompt_template = value.split(',').map(m => normalizePath(m));
 					await this.plugin.saveSettings();
 				}));
 
 		new Setting(containerEl)
-				.setName("ChatGPT's Behavior")
+				.setName("ChatGPT's behavior")
 				.setDesc('How do you want it to act?')
 				.addText(text => text
 					.setPlaceholder('You are a helpful assistant.')
@@ -468,8 +455,8 @@ class SampleSettingTab extends PluginSettingTab {
 					}));
 
 		new Setting(containerEl)
-				.setName("Conversation Retention")
-				.setDesc('How many days to hold conversations before deleting')
+				.setName("Conversation retention")
+				.setDesc('How many days to hold conversations before deleting.')
 				.addText(text => text
 					.setPlaceholder("10")
 					.setValue(String(this.plugin.settings.convo_retention))
