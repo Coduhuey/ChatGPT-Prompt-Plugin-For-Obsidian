@@ -21,7 +21,7 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	chatgpt_behavior: 'You are a helpful assistant.',
 	convo_retention: 10,
 	conversations: {},
-	last_convo: {conversations: [{role: "system", content: "You are a helpful assistant"}], last_updated: new Date()},
+	last_convo: {conversations: [{role: "system", content: "You are a helpful assistant"}], last_updated: new Date().getTime()},
 }
 
 const axios = require('axios');
@@ -33,7 +33,7 @@ class Conversation{
 
 class DatedConversation{
 	conversations: Conversation[];
-	last_updated: Date;
+	last_updated: number;
 }
 
 export const VIEW_TYPE_EXAMPLE = "example-view";
@@ -245,7 +245,7 @@ export default class HelloWorldPlugin extends Plugin {
 								return;
 							}
 							var starter_convo = [{ role: 'system', content: this.settings.chatgpt_behavior}];
-							this.conversations.set(file.name, {last_updated: new Date(), conversations: starter_convo});
+							this.conversations.set(file.name, {last_updated: new Date().getTime(), conversations: starter_convo});
 							this.addPlaceholdersToPrompt(prompt, file.name, file).then((prompt) => {
 								this.conversations.get(file.name).conversations.push({ role: 'user', content: prompt});
 								this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE).forEach((leaf) => {
@@ -277,7 +277,7 @@ export default class HelloWorldPlugin extends Plugin {
 		var date_today = new Date();
 		var keysToRemove = [];
 		for (let [key, value] of this.conversations) { 
-			let diffTime = Math.abs(date_today - value.last_updated);
+			let diffTime = Math.abs(date_today.getTime() - value.last_updated);
 			const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
 
 			if (diffDays > this.settings.convo_retention) {
@@ -289,7 +289,7 @@ export default class HelloWorldPlugin extends Plugin {
 		});
 	}
 
-	async callChatGPT(dated_conversation : DatedConversation) { //: Promise<string>
+	async callChatGPT(dated_conversation : DatedConversation) {
 		let cur_conversation = dated_conversation.conversations;
 		if (this.settings.api_key == ''){
 			new Notice('Please add an api key to the settings');
@@ -317,7 +317,7 @@ export default class HelloWorldPlugin extends Plugin {
 	  
 				const modelReply = response.data.choices[0].message.content;
 				cur_conversation.push({ role: 'assistant', content: modelReply});
-				dated_conversation.last_updated = new Date();
+				dated_conversation.last_updated = new Date().getTime();
 				
 			} catch (error) {
 			  console.error('Error interacting with ChatGPT API:', error.message);
@@ -415,8 +415,9 @@ class SampleSettingTab extends PluginSettingTab {
 			.setDesc('Get your api key from: https://platform.openai.com/api-keys.')
 			.addText(text => text
 				.setPlaceholder('Enter api key')
-				.setValue(this.plugin.settings.api_key)
+				.setValue("****************")
 				.onChange(async (value) => {
+					//I don't think I can encrypt this api key properly?
 					this.plugin.settings.api_key = value;
 					await this.plugin.saveSettings();
 				}));
