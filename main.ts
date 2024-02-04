@@ -1,10 +1,10 @@
 import { workerData } from 'worker_threads';
 import { ExampleView } from './main';
-import { TFile, ViewState, Workspace, ItemView, addIcon, Menu, App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, Vault, getAllTags, normalizePath } from 'obsidian';
+import { TFile, ViewState, Workspace, ItemView, addIcon, Menu, App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, Vault, getAllTags, normalizePath, requestUrl } from 'obsidian';
 
 // Remember to rename these classes and interfaces!
 
-interface MyPluginSettings {
+interface Settings {
 	api_key: string;
 	tags: string[];
 	path_to_prompt_template: string[];
@@ -14,7 +14,7 @@ interface MyPluginSettings {
 	last_convo: DatedConversation;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
+const DEFAULT_SETTINGS: Settings = {
 	api_key: '',
 	tags: [],
 	path_to_prompt_template: [],
@@ -23,8 +23,6 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	conversations: {},
 	last_convo: {conversations: [{role: "system", content: "You are a helpful assistant"}], last_updated: new Date().getTime()},
 }
-
-const axios = require('axios');
 
 class Conversation{
 	role: string;
@@ -43,8 +41,8 @@ export class ExampleView extends ItemView {
 	display_text: string;
 	conversation: DatedConversation;
 	leaf: WorkspaceLeaf;
-	plugin: HelloWorldPlugin;
-  constructor(leaf: WorkspaceLeaf, plugin : HelloWorldPlugin) {
+	plugin: PromptGptPlugin;
+  constructor(leaf: WorkspaceLeaf, plugin : PromptGptPlugin) {
     super(leaf);
 	
 	this.plugin = plugin;
@@ -73,6 +71,7 @@ export class ExampleView extends ItemView {
 
     const container = this.containerEl.children[1];
     container.empty();
+	container.addClass("main-container");
     let containerEl = container.createEl("div", { text: "ChatGPT" });
 	this.createChatUI(containerEl);
   }
@@ -83,27 +82,20 @@ export class ExampleView extends ItemView {
 
   createChatUI(container: HTMLElement) {
 
-	container.style.height = '100%';
-	container.style.width = '100%';
-
 	const linebreak = container.createEl('div');
-	linebreak.style.padding = '5px';
+	linebreak.addClass("line-break");
 	container.appendChild(linebreak);
 
 	const chatDiv = container.createEl('div');
-	chatDiv.id = 'chat-container';
-	chatDiv.style.height = '92%';
-	chatDiv.style.overflow = 'auto';
-	chatDiv.style.userSelect = "text";
-	chatDiv.style.padding = '10px';
+	chatDiv.addClass('chat-container');
   
 	container.appendChild(chatDiv);
   
 	const inputBox = container.createEl('input');
 	inputBox.type = 'text';
 	inputBox.placeholder = 'Type your message...';
-	inputBox.style.width = '100%';
-	inputBox.style.marginTop = '10px';
+	inputBox.addClass("input-box");
+	
 
 	if (this.conversation){
 		this.displayConversation(chatDiv);
@@ -168,8 +160,8 @@ formatContent(chatDiv: HTMLElement, content: string) {
 }
 } 
 
-export default class HelloWorldPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class PromptGptPlugin extends Plugin {
+	settings: Settings;
 	window: WorkspaceLeaf;
 	conversations: Map<string, DatedConversation>;
 	loaded: boolean = true;
@@ -190,7 +182,7 @@ export default class HelloWorldPlugin extends Plugin {
 
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new SettingTab(this.app, this));
 
 		this.addRibbonIcon('dice', 'Show/Hide ChatGPT', () => {
 			const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE);
@@ -244,7 +236,7 @@ export default class HelloWorldPlugin extends Plugin {
 							if (!prompt) {
 								return;
 							}
-							var starter_convo = [{ role: 'system', content: this.settings.chatgpt_behavior}];
+							let starter_convo = [{ role: 'system', content: this.settings.chatgpt_behavior}];
 							this.conversations.set(file.name, {last_updated: new Date().getTime(), conversations: starter_convo});
 							this.addPlaceholdersToPrompt(prompt, file.name, file).then((prompt) => {
 								this.conversations.get(file.name).conversations.push({ role: 'user', content: prompt});
@@ -274,8 +266,8 @@ export default class HelloWorldPlugin extends Plugin {
 			
 		}, '');
 
-		var date_today = new Date();
-		var keysToRemove = [];
+		let date_today = new Date();
+		let keysToRemove = [];
 		for (let [key, value] of this.conversations) { 
 			let diffTime = Math.abs(date_today.getTime() - value.last_updated);
 			const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
@@ -301,19 +293,18 @@ export default class HelloWorldPlugin extends Plugin {
 				const apiKey = this.settings.api_key;
 				const apiUrl = 'https://api.openai.com/v1/chat/completions';
 	  
-				const response = await axios.post(
-				  apiUrl,
-				  {
-					model: 'gpt-3.5-turbo',
-					messages: cur_conversation,
-				  },
-				  {
+				const response = await requestUrl({
+					url: apiUrl,
+					method: 'POST',
 					headers: {
 					  'Content-Type': 'application/json',
 					  'Authorization': `Bearer ${apiKey}`,
 					},
-				  }
-				);
+					body: JSON.stringify({
+					  model: 'gpt-3.5-turbo',
+					  messages: cur_conversation,
+					}),
+				  });
 	  
 				const modelReply = response.data.choices[0].message.content;
 				cur_conversation.push({ role: 'assistant', content: modelReply});
@@ -353,7 +344,7 @@ export default class HelloWorldPlugin extends Plugin {
 		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE);
 		if (leaves.length > 0) {
 			// A leaf with our view already exists, use that
-			var leaf = leaves[0];
+			let leaf = leaves[0];
 			leaf.detach();
 		}
 	}
@@ -397,10 +388,10 @@ async addPlaceholdersToPrompt(prompt: string, filename: string, currentFile: TFi
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: HelloWorldPlugin;
+class SettingTab extends PluginSettingTab {
+	plugin: PromptGptPlugin;
 
-	constructor(app: App, plugin: HelloWorldPlugin) {
+	constructor(app: App, plugin: PromptGptPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}

@@ -7,9 +7,23 @@ If your plugin does not need CSS, delete this file.
 
 */
 
-#chat-container {
-    height : '92%';
+.chat-container {
+    height : 92%;
 	overflow : 'auto';
-	display : 'flex';
-	flex-direction : 'column-reverse';
+	user-select : 'text';
+	padding : 10px;
+}
+
+.main-container {
+	height : 100%;
+	width : 100%;
+}
+
+.line-break {
+	padding : '5px';
+}
+
+.input-box {
+	width : 100%;
+	margin-top : 10px;
 }
