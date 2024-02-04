@@ -296,8 +296,8 @@ export default class PromptGptPlugin extends Plugin {
 				const response = await requestUrl({
 					url: apiUrl,
 					method: 'POST',
+					contentType: 'application/json',
 					headers: {
-					  'Content-Type': 'application/json',
 					  'Authorization': `Bearer ${apiKey}`,
 					},
 					body: JSON.stringify({
@@ -306,7 +306,7 @@ export default class PromptGptPlugin extends Plugin {
 					}),
 				  });
 	  
-				const modelReply = response.data.choices[0].message.content;
+				const modelReply = response.json.choices[0].message.content;
 				cur_conversation.push({ role: 'assistant', content: modelReply});
 				dated_conversation.last_updated = new Date().getTime();
 				
