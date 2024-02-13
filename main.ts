@@ -1,8 +1,5 @@
 import { workerData } from 'worker_threads';
-import { ExampleView } from './main';
 import { TFile, ViewState, Workspace, ItemView, addIcon, Menu, App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, Vault, getAllTags, normalizePath, requestUrl } from 'obsidian';
-
-// Remember to rename these classes and interfaces!
 
 interface Settings {
 	api_key: string;
@@ -34,10 +31,10 @@ class DatedConversation{
 	last_updated: number;
 }
 
-export const VIEW_TYPE_EXAMPLE = "example-view";
+export const VIEW_TYPE_CHATGPT_RESPONSE = "chatgpt-response-view";
 
 
-export class ExampleView extends ItemView {
+export class ChatGptResponseView extends ItemView {
 	display_text: string;
 	conversation: DatedConversation;
 	leaf: WorkspaceLeaf;
@@ -49,7 +46,7 @@ export class ExampleView extends ItemView {
   }
 
   getViewType() {
-    return VIEW_TYPE_EXAMPLE;
+    return VIEW_TYPE_CHATGPT_RESPONSE;
   }
 
   getDisplayText() {
@@ -131,7 +128,6 @@ export class ExampleView extends ItemView {
 	this.conversation.conversations.map((msg) => {
 		let div = chatDiv.createEl('div');
 		let strong = div.createEl('strong', {text: this.capitalizeFirstLetter(msg.role)+"\n\n"});
-		//let formattedEl = div.createEl('div', {text: msg.content.replace("\n", "\n\n")});
 		let formattedEl = this.formatContent(chatDiv, msg.content)
 		div.appendChild(strong);
 		div.appendChild(formattedEl);
@@ -162,7 +158,6 @@ formatContent(chatDiv: HTMLElement, content: string) {
 
 export default class PromptGptPlugin extends Plugin {
 	settings: Settings;
-	window: WorkspaceLeaf;
 	conversations: Map<string, DatedConversation>;
 	loaded: boolean = true;
 	oldWorkspace: Workspace;
@@ -184,8 +179,8 @@ export default class PromptGptPlugin extends Plugin {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SettingTab(this.app, this));
 
-		this.addRibbonIcon('dice', 'Show/Hide ChatGPT', () => {
-			const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE);
+		this.addRibbonIcon('brain-circuit', 'Show/Hide ChatGPT', () => {
+			const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_CHATGPT_RESPONSE);
 
 			if(leaves.length > 0){
 				this.deactivateView();
@@ -200,11 +195,11 @@ export default class PromptGptPlugin extends Plugin {
 		});
 
 		this.registerView(
-			VIEW_TYPE_EXAMPLE,
-			(leaf) => new ExampleView(leaf, this)
+			VIEW_TYPE_CHATGPT_RESPONSE,
+			(leaf) => new ChatGptResponseView(leaf, this)
 		  );
 
-		this.app.workspace.on('file-open', (file) => {
+		this.registerEvent(this.app.workspace.on('file-open', (file) => {
 			if(!this.loaded){
 				return;
 			}
@@ -214,8 +209,8 @@ export default class PromptGptPlugin extends Plugin {
 				}
 
 				if(this.conversations.has(file.name)){
-					this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE).forEach((leaf) => {
-						if (leaf.view instanceof ExampleView) {
+					this.app.workspace.getLeavesOfType(VIEW_TYPE_CHATGPT_RESPONSE).forEach((leaf) => {
+						if (leaf.view instanceof ChatGptResponseView) {
 						  leaf.view.setDisplayText(this.conversations.get(file.name));
 						}
 					  });
@@ -230,32 +225,32 @@ export default class PromptGptPlugin extends Plugin {
 				if (!tags){
 					return;
 				}
-				this.settings.tags.forEach((tag) => {
+				this.settings.tags.every((tag) => {
 						if (tags.includes('#'+tag)){
 							this.getPromptText(tag).then((prompt) => {
 							if (!prompt) {
-								return;
+								return true;
 							}
 							let starter_convo = [{ role: 'system', content: this.settings.chatgpt_behavior}];
 							this.conversations.set(file.name, {last_updated: new Date().getTime(), conversations: starter_convo});
 							this.addPlaceholdersToPrompt(prompt, file.name, file).then((prompt) => {
 								this.conversations.get(file.name).conversations.push({ role: 'user', content: prompt});
-								this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE).forEach((leaf) => {
-									if (leaf.view instanceof ExampleView) {
+								this.app.workspace.getLeavesOfType(VIEW_TYPE_CHATGPT_RESPONSE).forEach((leaf) => {
+									if (leaf.view instanceof ChatGptResponseView) {
 										//this is that later part I mentioned
 									  leaf.view.setDisplayText(this.conversations.get(file.name));
 									}
 								  });
 								//updates the parameter for the setDisplayText later
 								this.callChatGPT(this.conversations.get(file.name)).then(() => {
-									this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE).forEach((leaf) => {
-										if (leaf.view instanceof ExampleView) {
+									this.app.workspace.getLeavesOfType(VIEW_TYPE_CHATGPT_RESPONSE).forEach((leaf) => {
+										if (leaf.view instanceof ChatGptResponseView) {
 											//this is that later part I mentioned
 										  leaf.view.setDisplayText(this.conversations.get(file.name));
 										}
 									  });
 
-									  return;
+									  return true;
 								});
 							});
 
@@ -264,7 +259,7 @@ export default class PromptGptPlugin extends Plugin {
 				});
 			}
 			
-		}, '');
+		}, ''));
 
 		let date_today = new Date();
 		let keysToRemove = [];
@@ -324,7 +319,7 @@ export default class PromptGptPlugin extends Plugin {
 		this.oldWorkspace = workspace;
 	
 		let leaf: WorkspaceLeaf | null = null;
-		const leaves = workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE);
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_CHATGPT_RESPONSE);
 	
 		if (leaves.length > 0) {
 		  // A leaf with our view already exists, use that
@@ -333,7 +328,7 @@ export default class PromptGptPlugin extends Plugin {
 		  // Our view could not be found in the workspace, create a new leaf
 		  // in the right sidebar for it
 		  leaf = workspace.getRightLeaf(false);
-		  await leaf.setViewState({ type: VIEW_TYPE_EXAMPLE, active: true });
+		  await leaf.setViewState({ type: VIEW_TYPE_CHATGPT_RESPONSE, active: true });
 		}
 	
 		// "Reveal" the leaf in case it is in a collapsed sidebar
@@ -341,7 +336,7 @@ export default class PromptGptPlugin extends Plugin {
 	  }
 
 	async deactivateView() {
-		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE);
+		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_CHATGPT_RESPONSE);
 		if (leaves.length > 0) {
 			// A leaf with our view already exists, use that
 			let leaf = leaves[0];

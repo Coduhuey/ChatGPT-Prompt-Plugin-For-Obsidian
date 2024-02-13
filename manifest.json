@@ -1,10 +1,10 @@
 {
 	"id": "chatgpt-prompt",
 	"name": "Prompt ChatGPT",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"minAppVersion": "0.15.0",
 	"description": "Send templated prompts to chatgpt when you open a file",
 	"author": "Coduhuey",
-	"authorUrl": "",
+	"authorUrl": "https://github.com/Coduhuey",
 	"isDesktopOnly": true
 }
