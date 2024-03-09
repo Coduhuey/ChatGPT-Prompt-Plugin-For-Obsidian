@@ -1,10 +1,10 @@
 {
-	"id": "chatgpt-prompt",
-	"name": "Prompt ChatGPT",
-	"version": "1.0.8",
+	"id": "chatgpt-prompt-fake",
+	"name": "Fake Prompt ChatGPT",
+	"version": "1.0.9",
 	"minAppVersion": "0.15.0",
-	"description": "Send templated prompts to chatgpt when you open a file",
+	"description": "Send templates to chatgpt when you open a file",
 	"author": "Coduhuey",
-	"authorUrl": "https://github.com/Coduhuey",
+	"authorUrl": "",
 	"isDesktopOnly": true
 }
